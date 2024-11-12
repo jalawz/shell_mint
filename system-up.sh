@@ -212,12 +212,13 @@ custom_mint_orchis() {
   sudo unzip -o resources/wallpaper.zip -d /usr/share/backgrounds/
 
   # Installing and configuring Cinnamon Applets
-  unzip -o resources/cinnamon-applets.zip -d ~/.local/share/cinnamon/applets
+  unzip -o resources/cinnamon-applets.zip -d ~/.local/share/cinnamon/applets/
   unzip -o resources/cinnamon-applets-config.zip -d ~/.config/
 
   # Restore Cinnamon desktop and layouts
   unzip -o resources/orchis/cinnamon-orchis-dconf.zip -d ~/Downloads/
   dconf load / < ~/Downloads/cinnamon-orchis.conf
+
 
   # Install ULauncher
   sudo add-apt-repository universe -y
@@ -226,7 +227,7 @@ custom_mint_orchis() {
   unzip -o resources/ulauncher-themes.zip -d $HOME/.config/
 
   # Install Conky and Configure it
-  eval $install_cmd conky-all jq curl playerctl -y
+  eval $install_cmd conky-all jq curl playerctl
   unzip -o resources/conky-config.zip -d $HOME
 
   # Install Glava
@@ -238,10 +239,10 @@ custom_mint_orchis() {
     libxrender-dev \
     libxcomposite-dev \
     liblua5.3-dev \
-    liblua5.3 \
+    liblua5.3-0 \
     lua-lgi \
     lua-filesystem \
-    libobs0 \
+    libobs0t64 \
     libobs-dev \
     meson \
     buil-essential \
