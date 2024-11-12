@@ -1,22 +1,27 @@
 #!/bin/bash
 
-# Detecta a distribuição
 if [ -f /etc/os-release ]; then
   . /etc/os-release
+  if [ -z "$ID" ]; then
+    echo "Não foi possível detectar a distribuição."
+    exit 1
+  fi
   DISTRO=$ID
 else
   echo "Distribuição não reconhecida."
   exit 1
 fi
 
+
 # Variáveis
-CUSTOM_FOLDER="$PWD/resources"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+CUSTOM_FOLDER="$SCRIPT_DIR/resources"
 zip_file="ubuntu-desktop-settings.zip"
 settings_conf="Downloads/ubuntu-desktop-settings.conf"
 update_cmd="sudo apt update -y"
 dist_upgrade="sudo apt dist-upgrade -y"
 install_cmd="sudo apt install -y"
-remove_cmd="sudo apt-get remove -y"
+remove_cmd="sudo apt remove -y"
 chrome_url="https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
 vscode_url="https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64"
 
@@ -55,6 +60,8 @@ install_flatpaks() {
     echo "Instalando $app:"
     flatpak install flathub "$app" -y
   done
+
+  flatpak update -y
 
   sudo flatpak override --filesystem=$HOME/.themes
   sudo flatpak override --filesystem=$HOME/.local/share/icons
@@ -190,64 +197,57 @@ custom_mint_orchis() {
   # Setup Inicial
   eval "$update_cmd && $dist_upgrade"
 
-  # System settings > Windows > Behavior > Location of newly opened > center
+  # Verificar e instalar dependências
+  if ! command -v git &> /dev/null; then
+    echo "Erro: git não está instalado. Instalando..."
+    eval $install_cmd git
+  fi
 
-  # Install nautilus file manager and set default
-  eval $install_cmd nautilus \
-    nautilus-admin \
-    nautilus-extension-gnome-terminal
+  # Instalar o Nautilus e extensões
+  eval $install_cmd nautilus nautilus-admin nautilus-extension-gnome-terminal
 
-  # System settings > Preferences > Preferred Applications > File manager: Files (nautilus)
-
-  # Install GTK Theme1
+  # Configuração de File manager preferido
+  gsettings set org.cinnamon.desktop.default-applications.filemanager exec 'nautilus'
+  
+  # Clonar e instalar o GTK Theme
   git clone https://github.com/vinceliuice/Orchis-theme.git
-  ./Orchis-theme/install.sh -t all -c light dark -s compact
+  cd Orchis-theme
+  ./install.sh -t all -c light dark -s compact
+  cd ..
 
-  # Install Icon Themes
+  # Instalar Tema de Ícones
   git clone https://github.com/vinceliuice/Tela-circle-icon-theme.git
-  ./Tela-circle-icon-theme/install.sh -a
+  cd Tela-circle-icon-theme
+  ./install.sh -a
+  cd ..
 
-  # Install fonts and wallpapers
+  # Instalar fontes e wallpapers
   sudo unzip -o resources/fonts.zip -d ~/.local/share/
   sudo unzip -o resources/wallpaper.zip -d /usr/share/backgrounds/
 
-  # Installing and configuring Cinnamon Applets
+  # Instalar e configurar Applets do Cinnamon
   unzip -o resources/cinnamon-applets.zip -d ~/.local/share/cinnamon/applets/
   unzip -o resources/cinnamon-applets-config.zip -d ~/.config/
 
-  # Restore Cinnamon desktop and layouts
+  # Restaurar a configuração do Cinnamon
   unzip -o resources/orchis/cinnamon-orchis-dconf.zip -d ~/Downloads/
   dconf load / < ~/Downloads/cinnamon-orchis.conf
 
-
-  # Install ULauncher
+  # Instalar o ULauncher
   sudo add-apt-repository universe -y
   sudo add-apt-repository ppa:agornostal/ulauncher -y
   eval $update_cmd && $install_cmd ulauncher
   unzip -o resources/ulauncher-themes.zip -d $HOME/.config/
 
-  # Install Conky and Configure it
+  # Instalar e configurar o Conky
   eval $install_cmd conky-all jq curl playerctl
   unzip -o resources/conky-config.zip -d $HOME
 
-  # Install Glava
-  eval $install_cmd libgl1-mesa-dev  \
-    libpulse0 \
-    libpulse-dev \
-    libxext6 \
-    libxext-dev \
-    libxrender-dev \
-    libxcomposite-dev \
-    liblua5.3-dev \
-    liblua5.3-0 \
-    lua-lgi \
-    lua-filesystem \
-    libobs0t64 \
-    libobs-dev \
-    meson \
-    buil-essential \
-    gcc
-  
+  # Instalar Glava
+  eval $install_cmd libgl1-mesa-dev libpulse0 libpulse-dev libxext6 libxext-dev libxrender-dev \
+    libxcomposite-dev liblua5.3-dev liblua5.3-0 lua-lgi lua-filesystem libobs0t64 libobs-dev \
+    meson build-essential gcc
+
   sudo ldconfig
 
   git clone https://gitlab.com/wild-turtles-publicly-release/glava/glava.git
@@ -257,13 +257,17 @@ custom_mint_orchis() {
   sudo ninja -C build install
   glava --copy-config
   cd ..
-  unzip -o resources/glava-config.zip -d $HOME_URL
+  unzip -o resources/glava-config.zip -d $HOME
 
-  # Install Plymouth
+  # Instalar Plymouth e aplicar o tema
   eval $install_cmd plymouth
   unzip -o resources/plymouth-theme.zip -d /usr/share/plymouth/themes
   sudo update-alternatives --install /usr/share/plymouth/themes/default.plymouth \
-  default.plymouth /usr/share/plymouth/themes/spinner_alt/spinner_alt.plymouth 100
+    default.plymouth /usr/share/plymouth/themes/spinner_alt/spinner_alt.plymouth 100
   sudo update-alternatives --config default.plymouth
   sudo update-initramfs -u
+
+  echo "Customização finalizada. Para aplicar todas as mudanças, reinicie seu computador."
 }
+
+custom_mint_orchis
