@@ -109,7 +109,7 @@ install_docker() {
 
 install_zsh() {
   echo "Instalando Zsh..."
-  eval $install_cmd zsh
+  eval $install_cmd zsh util-linux
 
   echo "Instalando Oh My Zsh..."
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -268,6 +268,41 @@ custom_mint_orchis() {
   sudo update-initramfs -u
 
   echo "Customização finalizada. Para aplicar todas as mudanças, reinicie seu computador."
+}
+
+additional_customization_orchis() {
+  # Instalar Cava Audio Visualizer
+  eval $install_cmd cava
+  unzip -o resources/cava-config.zip -d $HOME/.config/
+
+  # Instalar ZSH, oh-my-zsh and powerlevel10k
+  install_zsh
+  git clone --depth=1 \
+  https://github.com/romkatv/powerlevel10k.git \
+  ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+  unzip -o resources/omz-config.zip -d $HOME
+  
+  # Instalar Color Scheme for Gnome Terminal
+  wget -O gogh https://git.io/vQgMr && chmod +x gogh && ./gogh && rm gogh
+  dconf load /org/gnome/terminal/ < org.gnome.terminal.dconf
+
+  # Instalar firefox theme
+  git clone https://github.com/vinceliuice/WhiteSur-firefox-theme.git
+  cd WhiteSur-firefox-theme
+  ./install.sh -m
+  cd ..
+
+  # Instalar NeoFetch
+  eval $install_cmd neofetch
+  unzip -o resources/neofetch-config.zip -d $HOME/.config/
+
+  # Change Margin Grouped Window List Applets
+  unzip -o resources/mod-cinnamon-css-grouped-window-list.zip -d $HOME/Downloads
+  cd $HOME/Downloads
+  chmod +x mod-cinnamon-css-grouped-window-list.sh
+  ./mod-cinnamon-css-grouped-window-list.sh
+  cd $SCRIPT_DIR
+
 }
 
 custom_mint_orchis
